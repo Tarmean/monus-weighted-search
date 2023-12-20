@@ -302,7 +302,7 @@ instance Monad m => Monad (HeapT w m) where
     where
       g (Leaf x) = runHeapT (f x)
       g (w :< xs) = pure (w :< (xs >>= f))
-  {-# INLINE (>>=) #-}
+  -- {-# INLINE (>>=) #-}
   xs >> ys = xs >>= const ys
   {-# INLINE (>>) #-}
 
@@ -372,7 +372,7 @@ popMinOneT = go mempty [] .# runHeapT
       Nil -> go' w (comb (reverse a))
       Leaf x :- xs -> pure (Just ((x, w), tell w >> HeapT (foldl (\ys (yw,y) -> ListT (pure ((yw :< y) :- ys))) xs a)))
       (u :< x) :- xs -> go w ((u,x) : a) xs
-{-# INLINE popMinOneT #-}
+{-# INLINABLE popMinOneT #-}
     
 -- | /O(log n)/. 'popMinOne' returns the smallest weighted element in the
 -- heap, along with its weight, along with the rest of the heap.
@@ -381,7 +381,7 @@ popMinOneT = go mempty [] .# runHeapT
 -- worse performance in general.
 popMinOne :: Monus w => Heap w a -> Maybe ((a, w), Heap w a)
 popMinOne = runIdentity #. popMinOneT
-{-# INLINE popMinOne #-}
+{-# INLINABLE popMinOne #-}
 
 -- | The monadic version of 'flatten'.
 flattenT :: (Monad m, Monoid w) => HeapT w m a -> ListT m (a, w)
@@ -390,7 +390,7 @@ flattenT = runWriterT #. go
     go = (h <=< lift) .# runHeapT
     h (Leaf x) = return x
     h (w :< xs) = writer (xs, w) >>= go
-{-# INLINE flattenT #-}
+{-# INLINABLE flattenT #-}
 
 -- | /O(n)/. Return all the elements of the heap, /not/ in order of their
 -- weights, paired with their weights.

@@ -46,6 +46,7 @@ import MonusWeightedSearch.Internal.AdjList ( toGraph, AdjList )
 
 import qualified Control.Comonad.Heap.Pointed as H
 import qualified MonusWeightedSearch.Examples.Dijkstra as M
+import qualified MonusWeightedSearch.ExamplesCPS.Dijkstra as C
 import qualified MonusWeightedSearch.Examples.Sort as M
 
 import Data.Monus ( Monus(..) )
@@ -58,6 +59,9 @@ import Data.Function (on)
 instance Arbitrary Natural where
   arbitrary = arbitrarySizedNatural
   shrink = map fromInteger . filter (0<=) . shrink . toInteger
+
+prop_cpsDijkstra :: AdjList -> Property
+prop_cpsDijkstra gm = sort (H.dijkstra (toGraph gm) 1) === sort (C.dijkstra (toGraph gm) 1)
 
 prop_monadDijkstra :: AdjList -> Property
 prop_monadDijkstra gm = sort (H.dijkstra (toGraph gm) 1) === sort (M.dijkstra (toGraph gm) 1)

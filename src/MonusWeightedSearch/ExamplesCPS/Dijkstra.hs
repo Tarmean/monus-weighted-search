@@ -27,7 +27,7 @@
 -- of that, see the module "MonusWeightedSearch.Examples.Parsing", where the
 -- heap is used to implement a probabilistic parser.
 
-module MonusWeightedSearch.Examples.Dijkstra where
+module MonusWeightedSearch.ExamplesCPS.Dijkstra where
 
 import Prelude hiding (head)
 import Control.Monad.State.Strict
@@ -41,7 +41,9 @@ import qualified Data.Set as Set
 
 import Data.List.NonEmpty (NonEmpty(..))
 
-import Control.Monad.Heap
+import Control.Monad.CpsHeap
+
+
 
 -- $setup
 -- >>> import Prelude hiding (head)
@@ -62,7 +64,7 @@ graph _ = []
 
 -- | @'unique' x@ checks that @x@ has not yet been seen in this branch of the
 -- computation.
-unique :: Ord a => a -> HeapT w (State (Set a)) a
+unique :: (MonadState (Set a) m, Ord a, Alternative m) => a -> m a
 unique x = do
   seen <- get
   guard (Set.notMember x seen)
@@ -73,7 +75,9 @@ unique x = do
 -- | This is the Kleene star on the semiring of 'MonadPlus'. It is analagous to
 -- the 'many' function on 'Alternative's.
 star :: MonadPlus m => (a -> m a) -> a -> m a
-star f x = pure x <|> (f x >>= star f)
+star f = go
+  where
+   go x = pure x <|> (f x >>= go)
 {-# INLINE star #-}
 
 -- | This is a version of 'star' which keeps track of the inputs it was given.
@@ -88,21 +92,20 @@ pathed f = star (\ ~(x :| xs) -> fmap (:|x:xs) (f x)) . (:| [])
 -- [(1,0),(2,7),(3,9),(6,11),(5,20),(4,20)]
 --
 -- A version which actually produces the paths is 'shortestPaths'
-dijkstra' :: Ord a => Graph a -> a -> [(a, Dist)]
-dijkstra' g x =
-  evalState (searchT (star (asum . map (\(x,w) -> tell w >> unique x) . g) =<< unique x)) Set.empty
+-- dijkstra :: Ord a => Graph a -> a -> [(a, Dist)]
+--   evalState (searchT (star (asum . map (\(x,w) -> tell w >> unique x) . g) =<< unique x)) Set.empty
+-- {-# INLINE dijkstra #-}
+
+oneOf :: Alternative f => [a] -> f a
+oneOf = asum . map pure
+
+
 {-# INLINE dijkstra #-}
-
-
-dijkstra :: Ord a => Graph a -> a -> [(a, Dist)]
-dijkstra children = flip evalState Set.empty . searchT . (star step <=< unique)
+dijkstra :: (Ord a) => Graph a -> a -> [(a, Dist)]
+dijkstra children = flip evalState Set.empty . searchT mempty . (star step <=< unique)
   where
-      step = asum . map (\(x,w) -> tell w >> unique x) . children
+      step = asum . map (\(x,w) -> pauseWith (<>w) >> unique x) . children
 
-      -- transitive = star
-
-      -- oneOf = asum . map pure
-      -- cost = tell
 -- | Dijkstra's algorithm, which produces a path.
 --
 -- The only difference between this function and 'shortestPaths' is that this
@@ -116,7 +119,6 @@ dijkstra children = flip evalState Set.empty . searchT . (star step <=< unique)
 -- And it is indeed @[1,3,6,5]@. (it's returned in reverse)
 shortestPaths :: Ord a => Graph a -> a -> [(NonEmpty a, Dist)]
 shortestPaths g x =
-  evalState (searchT (pathed (asum . map (\(x,w) -> tell w >> unique x) . g) =<< unique x)) Set.empty
+  evalState (searchT mempty (pathed (asum . map (\(x,w) -> pauseWith (<>w) >> unique x) . g) =<< unique x)) Set.empty
 {-# INLINE shortestPaths #-}
-
 

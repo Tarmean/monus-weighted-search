@@ -86,6 +86,7 @@ Root xw x xs <+> Root yw y ys
 mergeHeaps :: Monus w => [Heap w a] -> Maybe (Heap w a)
 mergeHeaps xs = foldr pair id xs Nothing
   where
+
     pair x  k Nothing   = k (Just x)
     pair x2 k (Just x1) = Just (maybe (x1 <+> x2) ((x1 <+> x2) <+>) (k Nothing))
 {-# INLINE mergeHeaps #-}

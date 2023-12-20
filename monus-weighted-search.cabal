@@ -46,6 +46,11 @@ library
                      , Control.Comonad.Heap
                      , Control.Comonad.Heap.Pointed
 
+                     , Control.Monad.CpsHeap
+                     , MonusWeightedSearch.ExamplesCPS.Test
+                     , MonusWeightedSearch.ExamplesCPS.Dijkstra
+                     , MonusWeightedSearch.ExamplesCPS.Sort
+
                      , MonusWeightedSearch.Examples.Dijkstra
                      , MonusWeightedSearch.Examples.Sampling
                      , MonusWeightedSearch.Examples.SubsetSum
