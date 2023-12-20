@@ -37,7 +37,7 @@ fromList ls = go $ map norm $ groupBy ((==) `on` snd) . sortOn snd $ ls
     norm [] = (mempty, [])
 
     go ((w, xs):ys) = do
-        pauseWith (<>w)
+        pauseWith (\_ -> w)
         asum (fmap pure xs) <|> go ys
     go [] = empty
 
